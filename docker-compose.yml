@@ -1,0 +1,42 @@
+version: "3.9"
+services: 
+  db:
+    container_name: db
+    build: docker/mysql
+    platform: linux/x86_64
+    tty: true
+    env_file:
+      - .env
+    ports:
+      - "3306:3306"
+    restart: always
+    volumes:
+      - db:/var/lib/mysql
+      - type: bind
+        source: ./db-data/init
+        target: /docker-entrypoint-initdb.d
+    networks:
+      - golang_test_network
+  
+  api:
+    container_name: go
+    build: docker/go
+    tty: true
+    stdin_open: true
+    volumes:
+      - .:/go/src/app
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    # command: /bin/sh -c "go run api/main.go"
+    networks:
+      - golang_test_network
+    depends_on:
+      - db
+
+volumes:
+  db:
+networks:
+  golang_test_network:
+    external: true
